@@ -117,7 +117,7 @@ export function ExpenseChart() {
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="value" 
+                  dataKey="amount" 
                   stroke="#2563eb" 
                   strokeWidth={2}
                   dot={{ fill: '#2563eb', strokeWidth: 2, r: 4 }}

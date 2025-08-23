@@ -51,8 +51,8 @@ export function AIInsights() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/insights'] });
       toast({
-        title: "Insights Generated",
-        description: "New AI insights have been generated based on your recent expenses.",
+        title: "New Insights Generated",
+        description: "AI has analyzed your spending and generated new recommendations.",
       });
     },
     onError: (error: Error) => {
@@ -69,14 +69,40 @@ export function AIInsights() {
       }
       toast({
         title: "Error",
-        description: "Failed to generate insights. Please try again.",
+        description: "Failed to generate new insights. Please try again.",
         variant: "destructive",
       });
     },
   });
 
+  const markInsightReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("POST", `/api/insights/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/insights'] });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+    },
+  });
+
   const handleGenerateInsights = () => {
     generateInsightsMutation.mutate();
+  };
+
+  const handleMarkAsRead = (id: string) => {
+    markInsightReadMutation.mutate(id);
   };
 
   if (isLoading) {
@@ -97,68 +123,99 @@ export function AIInsights() {
   }
 
   return (
-    <Card className="bg-white shadow">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-        <CardTitle className="text-lg font-medium text-gray-900">AI Insights & Recommendations</CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleGenerateInsights}
-          disabled={generateInsightsMutation.isPending}
-          data-testid="button-generate-insights"
-        >
-          {generateInsightsMutation.isPending ? (
-            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4 mr-2" />
-          )}
-          Generate New
-        </Button>
+    <Card className="bg-white shadow" data-testid="card-ai-insights">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center space-x-2">
+            <Lightbulb className="h-5 w-5 text-amber-500" />
+            <span>AI Insights</span>
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleGenerateInsights}
+            disabled={generateInsightsMutation.isPending}
+            data-testid="button-generate-insights"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${generateInsightsMutation.isPending ? 'animate-spin' : ''}`} />
+            {generateInsightsMutation.isPending ? 'Generating...' : 'Generate'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4" data-testid="insights-list">
-          {(insights as any) && (insights as any).length > 0 ? (
-            (insights as any).map((insight: any) => (
+        {(insights as any) && (insights as any).length > 0 ? (
+          <div className="space-y-4" data-testid="insights-list">
+            {(insights as any).map((insight: any) => (
               <div 
                 key={insight.id} 
-                className={`flex items-start space-x-3 p-4 rounded-lg border ${getInsightColor(insight.type)}`}
-                data-testid={`insight-${insight.type}`}
+                className={`p-4 rounded-lg border ${getInsightColor(insight.type)}`}
+                data-testid={`insight-${insight.id}`}
               >
-                <div className="flex-shrink-0 mt-0.5">
-                  {getInsightIcon(insight.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" data-testid={`insight-title-${insight.id}`}>
-                    {insight.title}
-                  </p>
-                  <p className="text-sm mt-1" data-testid={`insight-description-${insight.id}`}>
-                    {insight.description}
-                  </p>
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    {getInsightIcon(insight.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium mb-1" data-testid={`insight-title-${insight.id}`}>
+                      {insight.title}
+                    </h4>
+                    <p className="text-sm opacity-80" data-testid={`insight-message-${insight.id}`}>
+                      {insight.message}
+                    </p>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-xs text-gray-600">
+                        {insight.priority === 'high' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            High Priority
+                          </span>
+                        )}
+                        {insight.priority === 'medium' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Medium Priority
+                          </span>
+                        )}
+                        {insight.priority === 'low' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Low Priority
+                          </span>
+                        )}
+                      </span>
+                      {insight.isRead === "false" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleMarkAsRead(insight.id)}
+                          className="text-xs"
+                          data-testid={`button-mark-read-${insight.id}`}
+                        >
+                          Mark as Read
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No insights yet</h3>
-              <p className="text-gray-600 mb-4">
-                Add some expenses to get personalized AI insights and recommendations.
-              </p>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Lightbulb className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No insights yet</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Add some expenses to get AI-powered insights and recommendations.
+            </p>
+            <div className="mt-6">
               <Button 
                 onClick={handleGenerateInsights}
                 disabled={generateInsightsMutation.isPending}
                 data-testid="button-generate-first-insights"
               >
-                {generateInsightsMutation.isPending ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Lightbulb className="w-4 h-4 mr-2" />
-                )}
-                Generate Insights
+                <RefreshCw className={`h-4 w-4 mr-2 ${generateInsightsMutation.isPending ? 'animate-spin' : ''}`} />
+                Generate First Insights
               </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

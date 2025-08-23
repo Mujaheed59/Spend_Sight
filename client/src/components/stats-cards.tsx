@@ -22,6 +22,11 @@ export function StatsCards() {
     retry: false,
   });
 
+  const { data: budgets } = useQuery({
+    queryKey: ['/api/budgets'],
+    retry: false,
+  });
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -40,6 +45,21 @@ export function StatsCards() {
   const categoriesUsed = (stats as any)?.categoryBreakdown?.length || 0;
   const topCategory = (stats as any)?.categoryBreakdown?.[0];
   const unreadInsights = (insights as any)?.filter((insight: any) => insight.isRead === "false")?.length || 0;
+  
+  // Calculate budget status
+  const currentMonthBudgets = (budgets as any)?.filter((budget: any) => {
+    const budgetStart = new Date(budget.startDate);
+    const budgetEnd = new Date(budget.endDate);
+    const now = new Date();
+    return now >= budgetStart && now <= budgetEnd && budget.period === 'monthly';
+  }) || [];
+  
+  const totalBudget = currentMonthBudgets.reduce((sum: number, budget: any) => sum + parseFloat(budget.amount), 0);
+  const budgetRemaining = totalBudget - totalSpent;
+  const budgetStatus = totalBudget === 0 ? 'No Budget Set' : 
+                      budgetRemaining >= 0 ? 'On Track' : 'Over Budget';
+  const budgetStatusColor = totalBudget === 0 ? 'text-gray-600' :
+                           budgetRemaining >= 0 ? 'text-green-600' : 'text-red-600';
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -77,20 +97,24 @@ export function StatsCards() {
         </div>
       </Card>
 
-      {/* Budget Remaining Card */}
+      {/* Budget Status Card */}
       <Card className="bg-white overflow-hidden shadow">
         <CardContent className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                totalBudget === 0 ? 'bg-gray-100' : budgetRemaining >= 0 ? 'bg-green-100' : 'bg-red-100'
+              }`}>
+                <CheckCircle className={`w-5 h-5 ${
+                  totalBudget === 0 ? 'text-gray-600' : budgetRemaining >= 0 ? 'text-green-600' : 'text-red-600'
+                }`} />
               </div>
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
                 <dt className="text-sm font-medium text-gray-500 truncate">Budget Status</dt>
                 <dd className="text-lg font-medium text-gray-900" data-testid="text-budget-status">
-                  On Track
+                  {budgetStatus}
                 </dd>
               </dl>
             </div>
@@ -98,7 +122,13 @@ export function StatsCards() {
         </CardContent>
         <div className="bg-gray-50 px-5 py-3">
           <div className="text-sm">
-            <span className="font-medium text-green-600">Staying within limits</span>
+            <span className={`font-medium ${budgetStatusColor}`}>
+              {totalBudget === 0 
+                ? 'Set budgets to track spending' 
+                : budgetRemaining >= 0 
+                  ? `${formatCurrency(budgetRemaining)} remaining` 
+                  : `${formatCurrency(Math.abs(budgetRemaining))} over budget`}
+            </span>
           </div>
         </div>
       </Card>

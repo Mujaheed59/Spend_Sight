@@ -7,6 +7,9 @@ import { ExpenseChart } from "@/components/expense-chart";
 import { AIInsights } from "@/components/ai-insights";
 import { RecentExpenses } from "@/components/recent-expenses";
 import { ExpenseForm } from "@/components/expense-form";
+import { BudgetSettings } from "@/components/budget-settings";
+import { CategoriesManager } from "@/components/categories-manager";
+import { ReportsExport } from "@/components/reports-export";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Menu } from "lucide-react";
@@ -17,6 +20,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showBudgetSettings, setShowBudgetSettings] = useState(false);
+  const [showCategoriesManager, setShowCategoriesManager] = useState(false);
+  const [showReportsExport, setShowReportsExport] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Redirect to home if not authenticated
@@ -43,23 +49,40 @@ export default function Dashboard() {
   }
 
   const handleExport = () => {
-    toast({
-      title: "Export Started",
-      description: "Your expense report is being generated...",
-    });
+    setShowReportsExport(true);
+  };
+
+  const handleSidebarNavigate = (action: string) => {
+    switch (action) {
+      case 'add-expense':
+        setShowExpenseForm(true);
+        break;
+      case 'manage-categories':
+        setShowCategoriesManager(true);
+        break;
+      case 'budget-settings':
+        setShowBudgetSettings(true);
+        break;
+      case 'export-reports':
+        setShowReportsExport(true);
+        break;
+      case 'generate-insights':
+        // This will be handled by the AIInsights component
+        break;
+    }
   };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <Sidebar />
+        <Sidebar onNavigate={handleSidebarNavigate} />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
+          <Sidebar onNavigate={handleSidebarNavigate} />
         </SheetContent>
       </Sheet>
 
@@ -75,7 +98,7 @@ export default function Dashboard() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-64">
-                <Sidebar />
+                <Sidebar onNavigate={handleSidebarNavigate} />
               </SheetContent>
             </Sheet>
             <div className="flex items-center space-x-2">
@@ -150,11 +173,32 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {/* Add Expense Modal */}
+      {/* Modals */}
       {showExpenseForm && (
         <ExpenseForm 
           open={showExpenseForm} 
           onClose={() => setShowExpenseForm(false)} 
+        />
+      )}
+      
+      {showBudgetSettings && (
+        <BudgetSettings 
+          open={showBudgetSettings} 
+          onClose={() => setShowBudgetSettings(false)} 
+        />
+      )}
+      
+      {showCategoriesManager && (
+        <CategoriesManager 
+          open={showCategoriesManager} 
+          onClose={() => setShowCategoriesManager(false)} 
+        />
+      )}
+      
+      {showReportsExport && (
+        <ReportsExport 
+          open={showReportsExport} 
+          onClose={() => setShowReportsExport(false)} 
         />
       )}
     </div>

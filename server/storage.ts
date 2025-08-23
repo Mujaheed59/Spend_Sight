@@ -43,6 +43,10 @@ export interface IStorage {
   // Budget operations
   getBudgetsByUser(userId: string): Promise<Budget[]>;
   createBudget(budget: InsertBudget & { userId: string }): Promise<Budget>;
+  deleteBudget(id: string): Promise<void>;
+  
+  // Enhanced category operations
+  deleteCategory(id: string): Promise<void>;
   
   // Analytics
   getExpenseStats(userId: string, startDate: string, endDate: string): Promise<{
@@ -202,6 +206,15 @@ export class DatabaseStorage implements IStorage {
       amount: budget.amount.toString(),
     }).returning();
     return newBudget;
+  }
+
+  async deleteBudget(id: string): Promise<void> {
+    await db.delete(budgets).where(eq(budgets.id, id));
+  }
+
+  // Enhanced category operations
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
   }
 
   // Analytics

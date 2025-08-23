@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertExpenseSchema, insertCategorySchema } from "@shared/schema";
+import { insertExpenseSchema, insertCategorySchema, insertBudgetSchema } from "@shared/schema";
 import { categorizeExpense, generateInsights } from "./openai";
 import { z } from "zod";
 
@@ -205,6 +205,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking insight as read:", error);
       res.status(500).json({ message: "Failed to mark insight as read" });
+    }
+  });
+
+  // Budget routes
+  app.get('/api/budgets', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const budgets = await storage.getBudgetsByUser(userId);
+      res.json(budgets);
+    } catch (error) {
+      console.error("Error fetching budgets:", error);
+      res.status(500).json({ message: "Failed to fetch budgets" });
+    }
+  });
+
+  app.post('/api/budgets', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertBudgetSchema.parse(req.body);
+      
+      const budget = await storage.createBudget({
+        ...validatedData,
+        userId,
+      });
+
+      res.json(budget);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        console.error("Error creating budget:", error);
+        res.status(500).json({ message: "Failed to create budget" });
+      }
+    }
+  });
+
+  app.delete('/api/budgets/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteBudget(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting budget:", error);
+      res.status(500).json({ message: "Failed to delete budget" });
+    }
+  });
+
+  // Enhanced category routes
+  app.post('/api/categories', isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(validatedData);
+      res.json(category);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid data", errors: error.errors });
+      } else {
+        console.error("Error creating category:", error);
+        res.status(500).json({ message: "Failed to create category" });
+      }
+    }
+  });
+
+  app.delete('/api/categories/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCategory(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
     }
   });
 

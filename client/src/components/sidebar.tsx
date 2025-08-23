@@ -7,23 +7,35 @@ import {
   Tags, 
   FileText, 
   Brain,
+  Target,
   LogOut,
   User
 } from "lucide-react";
 
 const navigation = [
-  { name: 'Dashboard', href: '#', icon: LayoutDashboard, current: true },
-  { name: 'Add Expense', href: '#', icon: Plus, current: false },
-  { name: 'Categories', href: '#', icon: Tags, current: false },
-  { name: 'Reports', href: '#', icon: FileText, current: false },
-  { name: 'AI Insights', href: '#', icon: Brain, current: false },
+  { name: 'Dashboard', href: '#', icon: LayoutDashboard, current: true, action: null },
+  { name: 'Add Expense', href: '#', icon: Plus, current: false, action: 'add-expense' },
+  { name: 'Categories', href: '#', icon: Tags, current: false, action: 'manage-categories' },
+  { name: 'Budgets', href: '#', icon: Target, current: false, action: 'budget-settings' },
+  { name: 'Reports', href: '#', icon: FileText, current: false, action: 'export-reports' },
+  { name: 'AI Insights', href: '#', icon: Brain, current: false, action: 'generate-insights' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: (action: string) => void;
+}
+
+export function Sidebar({ onNavigate }: SidebarProps) {
   const { user } = useAuth();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
+  };
+
+  const handleNavClick = (item: any) => {
+    if (item.action && onNavigate) {
+      onNavigate(item.action);
+    }
   };
 
   return (
@@ -41,20 +53,20 @@ export function Sidebar() {
         <nav className="mt-8 flex-1" data-testid="sidebar-navigation">
           <div className="px-2 space-y-1">
             {navigation.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href={item.href}
+                onClick={() => handleNavClick(item)}
                 className={cn(
                   item.current
                     ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                  'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
+                  'group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left'
                 )}
                 data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
-              </a>
+              </button>
             ))}
           </div>
         </nav>
