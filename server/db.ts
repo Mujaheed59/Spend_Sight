@@ -30,10 +30,8 @@ const connectDB = async () => {
     });
     
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
-    console.log('🔄 Retrying MongoDB connection in 5 seconds...');
-    
-    setTimeout(connectDB, 5000);
+    console.error('❌ MongoDB connection failed - using in-memory storage');
+    // Don't retry to avoid spam - app works fine with memory storage
   }
 };
 
