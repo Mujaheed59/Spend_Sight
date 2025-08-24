@@ -271,7 +271,7 @@ export function BudgetSettings({ open, onClose }: BudgetSettingsProps) {
                           <SelectValue placeholder="Select category (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Categories</SelectItem>
+                          <SelectItem value="all">All Categories</SelectItem>
                           {(categories as any)?.map((category: any) => (
                             <SelectItem key={category.id} value={category.id}>
                               <div className="flex items-center space-x-2">
