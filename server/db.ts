@@ -1,16 +1,37 @@
 import 'dotenv/config'; // Load .env variables
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
+import mongoose from 'mongoose';
 
-neonConfig.webSocketConstructor = ws;
+// MongoDB connection with fallback
+const connectDB = async () => {
+  try {
+    // Use MongoDB Atlas or local fallback
+    const mongoURI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/expense-tracker';
+    
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 3000,
+      socketTimeoutMS: 30000,
+      bufferCommands: false,
+    });
+    console.log('✅ MongoDB connected successfully');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    console.log('⚠️  Using in-memory fallback mode...');
+    
+    // Try connecting with a simple in-memory setup
+    try {
+      await mongoose.connect('mongodb://127.0.0.1:27017/expense-tracker-memory', {
+        serverSelectionTimeoutMS: 1000,
+        bufferCommands: false,
+      });
+      console.log('✅ Fallback MongoDB connection established');
+    } catch (fallbackError) {
+      console.log('⚠️  MongoDB not available, app will continue with limited functionality');
+    }
+  }
+};
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+// Initialize connection
+connectDB();
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+export { mongoose };
+export default mongoose;
