@@ -642,18 +642,33 @@ export class MongoStorage implements IStorage {
 // Initialize storage based on database availability
 let storage: IStorage;
 
-try {
-  // Check if mongoose is connected
-  if (mongoose.connection.readyState === 1) {
-    storage = new MongoStorage();
-    console.log('Using MongoDB storage');
-  } else {
-    storage = new MemStorage();
-    console.log('Using in-memory storage');
+// Initialize storage immediately with memory storage
+storage = new MemStorage();
+console.log('🚀 Using enhanced in-memory storage with real-time features');
+
+// Try to upgrade to MongoDB when available
+const tryMongoUpgrade = () => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      storage = new MongoStorage();
+      console.log('✅ Upgraded to MongoDB storage');
+    }
+  } catch (error) {
+    console.log('❌ MongoDB upgrade failed, staying with memory storage');
   }
-} catch (error) {
-  console.log('Database not available, using in-memory storage');
+};
+
+// Listen for database connection events
+mongoose.connection.on('connected', () => {
+  tryMongoUpgrade();
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️  MongoDB disconnected, using memory storage');
   storage = new MemStorage();
-}
+});
+
+// Try upgrade after a short delay
+setTimeout(tryMongoUpgrade, 2000);
 
 export { storage };

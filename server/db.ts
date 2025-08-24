@@ -1,32 +1,39 @@
 import 'dotenv/config'; // Load .env variables
 import mongoose from 'mongoose';
 
-// MongoDB connection with fallback
+// MongoDB connection with robust error handling
 const connectDB = async () => {
   try {
-    // Use MongoDB Atlas or local fallback
-    const mongoURI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/expense-tracker';
+    // Primary connection attempt - use local MongoDB
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/expense-tracker';
     
     await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 3000,
-      socketTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
       bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 5,
     });
-    console.log('✅ MongoDB connected successfully');
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    console.log('⚠️  Using in-memory fallback mode...');
+    console.log('✅ MongoDB connected successfully to:', mongoURI);
     
-    // Try connecting with a simple in-memory setup
-    try {
-      await mongoose.connect('mongodb://127.0.0.1:27017/expense-tracker-memory', {
-        serverSelectionTimeoutMS: 1000,
-        bufferCommands: false,
-      });
-      console.log('✅ Fallback MongoDB connection established');
-    } catch (fallbackError) {
-      console.log('⚠️  MongoDB not available, app will continue with limited functionality');
-    }
+    // Listen for connection events
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      console.log('⚠️  MongoDB disconnected');
+    });
+    
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB reconnected');
+    });
+    
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error);
+    console.log('🔄 Retrying MongoDB connection in 5 seconds...');
+    
+    setTimeout(connectDB, 5000);
   }
 };
 
