@@ -62,6 +62,263 @@ export interface IStorage {
 
 const MemoryStoreSession = MemoryStore(session);
 
+// In-memory storage implementation as fallback
+export class MemStorage implements IStorage {
+  private users: Map<string, User> = new Map();
+  private categories: Map<string, Category> = new Map();
+  private expenses: Map<string, Expense> = new Map();
+  private insights: Map<string, Insight> = new Map();
+  private budgets: Map<string, Budget> = new Map();
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new MemoryStoreSession({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
+    
+    // Initialize default categories
+    this.initializeDefaultCategories();
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  private initializeDefaultCategories() {
+    const defaultCategories = [
+      { name: "Food & Dining", color: "#ef4444", icon: "🍽️" },
+      { name: "Transportation", color: "#3b82f6", icon: "🚗" },
+      { name: "Shopping", color: "#10b981", icon: "🛍️" },
+      { name: "Entertainment", color: "#f59e0b", icon: "🎬" },
+      { name: "Bills & Utilities", color: "#8b5cf6", icon: "📱" },
+      { name: "Healthcare", color: "#ec4899", icon: "🏥" },
+      { name: "Education", color: "#06b6d4", icon: "📚" },
+      { name: "Travel", color: "#84cc16", icon: "✈️" },
+    ];
+
+    defaultCategories.forEach(cat => {
+      const id = this.generateId();
+      this.categories.set(id, {
+        id,
+        ...cat,
+        createdAt: new Date()
+      });
+    });
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    return undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.generateId();
+    const user: User = {
+      id,
+      ...insertUser,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const id = userData.id || this.generateId();
+    const existingUser = this.users.get(id);
+    const user: User = {
+      ...existingUser,
+      ...userData,
+      id,
+      updatedAt: new Date()
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values());
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const id = this.generateId();
+    const newCategory: Category = {
+      id,
+      ...category,
+      createdAt: new Date()
+    };
+    this.categories.set(id, newCategory);
+    return newCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    this.categories.delete(id);
+  }
+
+  async getExpensesByUser(userId: string, limit = 50): Promise<ExpenseWithCategory[]> {
+    const userExpenses = Array.from(this.expenses.values())
+      .filter(expense => expense.userId === userId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+
+    return userExpenses.map(expense => ({
+      ...expense,
+      category: expense.categoryId ? this.categories.get(expense.categoryId) || null : null
+    }));
+  }
+
+  async getExpensesByUserAndDateRange(userId: string, startDate: string, endDate: string): Promise<ExpenseWithCategory[]> {
+    const userExpenses = Array.from(this.expenses.values())
+      .filter(expense => expense.userId === userId && expense.date >= startDate && expense.date <= endDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return userExpenses.map(expense => ({
+      ...expense,
+      category: expense.categoryId ? this.categories.get(expense.categoryId) || null : null
+    }));
+  }
+
+  async createExpense(expense: InsertExpense & { userId: string }): Promise<Expense> {
+    const id = this.generateId();
+    const newExpense: Expense = {
+      id,
+      ...expense,
+      amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
+      paymentMethod: expense.paymentMethod,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  async updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense> {
+    const existing = this.expenses.get(id);
+    if (!existing) {
+      throw new Error('Expense not found');
+    }
+    const updated: Expense = {
+      ...existing,
+      ...expense,
+      amount: expense.amount ? (typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount) : existing.amount,
+      updatedAt: new Date()
+    };
+    this.expenses.set(id, updated);
+    return updated;
+  }
+
+  async deleteExpense(id: string): Promise<void> {
+    this.expenses.delete(id);
+  }
+
+  async getInsightsByUser(userId: string): Promise<Insight[]> {
+    return Array.from(this.insights.values())
+      .filter(insight => insight.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createInsight(insight: InsertInsight & { userId: string }): Promise<Insight> {
+    const id = this.generateId();
+    const newInsight: Insight = {
+      id,
+      ...insight,
+      createdAt: new Date()
+    };
+    this.insights.set(id, newInsight);
+    return newInsight;
+  }
+
+  async markInsightAsRead(id: string): Promise<void> {
+    const insight = this.insights.get(id);
+    if (insight) {
+      insight.isRead = "true";
+      this.insights.set(id, insight);
+    }
+  }
+
+  async getBudgetsByUser(userId: string): Promise<Budget[]> {
+    return Array.from(this.budgets.values())
+      .filter(budget => budget.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createBudget(budget: InsertBudget & { userId: string }): Promise<Budget> {
+    const id = this.generateId();
+    const newBudget: Budget = {
+      id,
+      ...budget,
+      amount: typeof budget.amount === 'string' ? parseFloat(budget.amount) : budget.amount,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.budgets.set(id, newBudget);
+    return newBudget;
+  }
+
+  async deleteBudget(id: string): Promise<void> {
+    this.budgets.delete(id);
+  }
+
+  async getExpenseStats(userId: string, startDate: string, endDate: string): Promise<{
+    totalSpent: number;
+    categoryBreakdown: Array<{ categoryName: string; amount: number; color: string }>;
+    dailyTrend: Array<{ date: string; amount: number }>;
+  }> {
+    const expenses = await this.getExpensesByUserAndDateRange(userId, startDate, endDate);
+    
+    const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    
+    const categoryMap = new Map<string, { amount: number; name: string; color: string }>();
+    const dailyMap = new Map<string, number>();
+    
+    expenses.forEach(expense => {
+      // Category breakdown
+      const categoryName = expense.category?.name || 'Uncategorized';
+      const categoryColor = expense.category?.color || '#6b7280';
+      const categoryKey = expense.categoryId || 'uncategorized';
+      
+      if (categoryMap.has(categoryKey)) {
+        categoryMap.get(categoryKey)!.amount += expense.amount;
+      } else {
+        categoryMap.set(categoryKey, {
+          amount: expense.amount,
+          name: categoryName,
+          color: categoryColor
+        });
+      }
+      
+      // Daily trend
+      if (dailyMap.has(expense.date)) {
+        dailyMap.set(expense.date, dailyMap.get(expense.date)! + expense.amount);
+      } else {
+        dailyMap.set(expense.date, expense.amount);
+      }
+    });
+    
+    const categoryBreakdown = Array.from(categoryMap.values())
+      .map(cat => ({ categoryName: cat.name, amount: cat.amount, color: cat.color }))
+      .sort((a, b) => b.amount - a.amount);
+      
+    const dailyTrend = Array.from(dailyMap.entries())
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    
+    return {
+      totalSpent,
+      categoryBreakdown,
+      dailyTrend
+    };
+  }
+}
+
 export class MongoStorage implements IStorage {
   sessionStore: session.Store;
 
@@ -386,4 +643,21 @@ export class MongoStorage implements IStorage {
   }
 }
 
-export const storage = new MongoStorage();
+// Initialize storage based on database availability
+let storage: IStorage;
+
+try {
+  // Check if mongoose is connected
+  if (mongoose.connection.readyState === 1) {
+    storage = new MongoStorage();
+    console.log('Using MongoDB storage');
+  } else {
+    storage = new MemStorage();
+    console.log('Using in-memory storage');
+  }
+} catch (error) {
+  console.log('Database not available, using in-memory storage');
+  storage = new MemStorage();
+}
+
+export { storage };

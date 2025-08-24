@@ -149,14 +149,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Format data for AI
       const formattedCurrent = currentExpenses.map(exp => ({
-        amount: parseFloat(exp.amount),
+        amount: typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount,
         categoryName: exp.category?.name || 'Uncategorized',
         date: exp.date,
         description: exp.description
       }));
       
       const formattedPrevious = previousExpenses.map(exp => ({
-        amount: parseFloat(exp.amount),
+        amount: typeof exp.amount === 'string' ? parseFloat(exp.amount) : exp.amount,
         categoryName: exp.category?.name || 'Uncategorized',
         date: exp.date,
         description: exp.description
@@ -164,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const formattedBudgets = budgets.map(budget => ({
         categoryName: budget.categoryId || 'General',
-        amount: parseFloat(budget.amount)
+        amount: typeof budget.amount === 'string' ? parseFloat(budget.amount) : budget.amount
       }));
 
       const aiInsights = await generateInsights(formattedCurrent, formattedPrevious, formattedBudgets);
