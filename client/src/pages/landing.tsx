@@ -18,7 +18,7 @@ export default function Landing() {
             </div>
             <span className="text-xl font-semibold text-gray-900">ExpenseAI</span>
           </div>
-          <Button onClick={handleLogin} className="bg-primary hover:bg-blue-700" data-testid="button-login">
+          <Button onClick={handleLogin} className="bg-primary hover:bg-primary/90" data-testid="button-login">
             Sign In
           </Button>
         </div>
@@ -37,7 +37,7 @@ export default function Landing() {
           <Button 
             onClick={handleLogin} 
             size="lg" 
-            className="bg-primary hover:bg-blue-700 text-lg px-8 py-3"
+            className="bg-primary hover:bg-primary/90 text-lg px-8 py-3"
             data-testid="button-get-started"
           >
             Get Started Free

@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-// import { setupAuth } from "./auth"; // Disabled - auth setup happens in routes
+import { setupAuth } from "./auth";
 
 const app = express();
 
@@ -10,16 +10,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// ✅ Enable CORS so frontend (5001) can access backend (5000)
+// ✅ Enable CORS so frontend can access backend (both on port 5000)
 app.use(
   cors({
-    origin: "http://localhost:5001", // frontend dev port
-    credentials: true,               // allow cookies/session
+    origin: "http://localhost:5000", // same port for Vite dev
+    credentials: true,                // allow cookies/session
   })
 );
 
 // ✅ Mount authentication routes
-// setupAuth(app); // Disabled - auth setup happens in routes
+setupAuth(app);
 
 // ✅ Request logging middleware
 app.use((req, res, next) => {

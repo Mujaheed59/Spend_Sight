@@ -4,38 +4,39 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(248, 50%, 98%);
-  --foreground: hsl(220, 13%, 9%);
+  /* Light Finance Theme Colors */
+  --background: hsl(120, 25%, 98%);  /* Very light mint green */
+  --foreground: hsl(210, 20%, 15%);  /* Dark navy for text */
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(220, 13%, 9%);
+  --card-foreground: hsl(210, 20%, 15%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(220, 13%, 9%);
-  --primary: hsl(217, 78%, 58%);
+  --popover-foreground: hsl(210, 20%, 15%);
+  --primary: hsl(142, 76%, 36%);     /* Professional green */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(151, 83%, 45%);
+  --secondary: hsl(197, 71%, 52%);   /* Light blue */
   --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(220, 13%, 95%);
-  --muted-foreground: hsl(220, 9%, 46%);
-  --accent: hsl(43, 96%, 56%);
-  --accent-foreground: hsl(26, 83%, 14%);
-  --destructive: hsl(0, 84%, 60%);
+  --muted: hsl(120, 25%, 95%);       /* Very light green tint */
+  --muted-foreground: hsl(210, 15%, 45%);
+  --accent: hsl(45, 93%, 68%);       /* Soft gold */
+  --accent-foreground: hsl(210, 20%, 15%);
+  --destructive: hsl(0, 75%, 55%);
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(220, 13%, 91%);
-  --input: hsl(220, 13%, 91%);
-  --ring: hsl(217, 78%, 58%);
-  --chart-1: hsl(217, 78%, 58%);
-  --chart-2: hsl(151, 83%, 45%);
-  --chart-3: hsl(43, 96%, 56%);
-  --chart-4: hsl(147, 79%, 42%);
-  --chart-5: hsl(341, 75%, 51%);
+  --border: hsl(120, 15%, 88%);      /* Light green border */
+  --input: hsl(120, 15%, 88%);
+  --ring: hsl(142, 76%, 36%);
+  --chart-1: hsl(142, 76%, 36%);     /* Green */
+  --chart-2: hsl(197, 71%, 52%);     /* Blue */
+  --chart-3: hsl(45, 93%, 68%);      /* Gold */
+  --chart-4: hsl(158, 64%, 52%);     /* Teal */
+  --chart-5: hsl(31, 81%, 62%);      /* Orange */
   --sidebar: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(220, 13%, 9%);
-  --sidebar-primary: hsl(217, 78%, 58%);
+  --sidebar-foreground: hsl(210, 20%, 15%);
+  --sidebar-primary: hsl(142, 76%, 36%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(220, 13%, 95%);
-  --sidebar-accent-foreground: hsl(217, 78%, 58%);
-  --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: hsl(217, 78%, 58%);
+  --sidebar-accent: hsl(120, 25%, 95%);
+  --sidebar-accent-foreground: hsl(142, 76%, 36%);
+  --sidebar-border: hsl(120, 15%, 88%);
+  --sidebar-ring: hsl(142, 76%, 36%);
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: 'Fira Code', monospace;
@@ -43,33 +44,34 @@
 }
 
 .dark {
-  --background: hsl(0, 0%, 0%);
-  --foreground: hsl(0, 0%, 95%);
-  --card: hsl(220, 13%, 5%);
-  --card-foreground: hsl(0, 0%, 95%);
-  --popover: hsl(220, 13%, 5%);
-  --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(217, 78%, 58%);
+  /* Dark Finance Theme */
+  --background: hsl(210, 20%, 6%);
+  --foreground: hsl(120, 25%, 95%);
+  --card: hsl(210, 20%, 8%);
+  --card-foreground: hsl(120, 25%, 95%);
+  --popover: hsl(210, 20%, 8%);
+  --popover-foreground: hsl(120, 25%, 95%);
+  --primary: hsl(142, 76%, 45%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(151, 83%, 45%);
+  --secondary: hsl(197, 71%, 52%);
   --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(220, 13%, 15%);
-  --muted-foreground: hsl(220, 9%, 65%);
-  --accent: hsl(43, 96%, 56%);
-  --accent-foreground: hsl(26, 83%, 14%);
-  --destructive: hsl(0, 84%, 60%);
+  --muted: hsl(210, 20%, 12%);
+  --muted-foreground: hsl(120, 15%, 65%);
+  --accent: hsl(45, 93%, 68%);
+  --accent-foreground: hsl(210, 20%, 15%);
+  --destructive: hsl(0, 75%, 55%);
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(220, 13%, 15%);
-  --input: hsl(220, 13%, 15%);
-  --ring: hsl(217, 78%, 58%);
-  --sidebar: hsl(220, 13%, 5%);
-  --sidebar-foreground: hsl(0, 0%, 95%);
-  --sidebar-primary: hsl(217, 78%, 58%);
+  --border: hsl(210, 20%, 15%);
+  --input: hsl(210, 20%, 15%);
+  --ring: hsl(142, 76%, 45%);
+  --sidebar: hsl(210, 20%, 8%);
+  --sidebar-foreground: hsl(120, 25%, 95%);
+  --sidebar-primary: hsl(142, 76%, 45%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(220, 13%, 15%);
-  --sidebar-accent-foreground: hsl(217, 78%, 58%);
-  --sidebar-border: hsl(220, 13%, 15%);
-  --sidebar-ring: hsl(217, 78%, 58%);
+  --sidebar-accent: hsl(210, 20%, 12%);
+  --sidebar-accent-foreground: hsl(142, 76%, 45%);
+  --sidebar-border: hsl(210, 20%, 15%);
+  --sidebar-ring: hsl(142, 76%, 45%);
 }
 
 @layer base {
