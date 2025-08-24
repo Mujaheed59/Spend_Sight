@@ -111,12 +111,8 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    for (const user of this.users.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-    return undefined;
+    const usersArray = Array.from(this.users.values());
+    return usersArray.find(user => user.username === username);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

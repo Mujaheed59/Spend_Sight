@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupAuth } from "./auth";
+// import { setupAuth } from "./auth"; // Disabled - auth setup happens in routes
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(
 );
 
 // ✅ Mount authentication routes
-setupAuth(app);
+// setupAuth(app); // Disabled - auth setup happens in routes
 
 // ✅ Request logging middleware
 app.use((req, res, next) => {
