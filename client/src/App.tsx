@@ -10,7 +10,10 @@ import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth-page";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Debug logging to track authentication state
+  console.log("Router state:", { isAuthenticated, isLoading, hasUser: !!user });
 
   if (isLoading) {
     return (
@@ -22,16 +25,12 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/auth" component={AuthPage} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-        </>
-      )}
+      <Route path="/auth">
+        {isAuthenticated ? <Dashboard /> : <AuthPage />}
+      </Route>
+      <Route path="/">
+        {isAuthenticated ? <Dashboard /> : <Landing />}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

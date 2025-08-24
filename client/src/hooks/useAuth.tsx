@@ -40,6 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Force query invalidation to ensure state updates
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Welcome back!",
+        description: "Successfully logged in to ExpenseAI.",
+        variant: "default",
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -57,6 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Force query invalidation to ensure state updates
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Welcome!",
+        description: "Account created successfully. Welcome to ExpenseAI!",
+        variant: "default",
+      });
     },
     onError: (error: Error) => {
       toast({

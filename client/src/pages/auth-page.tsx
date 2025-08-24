@@ -66,12 +66,22 @@ export default function AuthPage() {
   }, [user, isLoading, navigate]);
 
   const onLoginSubmit = (data: LoginData) => {
-    loginMutation.mutate(data);
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        // Delayed navigation to ensure state updates
+        setTimeout(() => navigate("/"), 100);
+      }
+    });
   };
 
   const onRegisterSubmit = (data: RegisterData) => {
     const { confirmPassword, ...registerData } = data;
-    registerMutation.mutate(registerData);
+    registerMutation.mutate(registerData, {
+      onSuccess: () => {
+        // Delayed navigation to ensure state updates
+        setTimeout(() => navigate("/"), 100);
+      }
+    });
   };
 
   if (isLoading) {
