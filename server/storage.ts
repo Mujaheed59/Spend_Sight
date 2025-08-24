@@ -5,6 +5,7 @@ import {
   insights,
   budgets,
   type User,
+  type InsertUser,
   type UpsertUser,
   type Expense,
   type ExpenseWithCategory,
@@ -16,13 +17,20 @@ import {
   type Budget,
   type InsertBudget,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, and, gte, lte, sql, asc } from "drizzle-orm";
+import connectPg from "connect-pg-simple";
+import session from "express-session";
 
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
+  // User operations for local authentication
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Session store for authentication
+  sessionStore: session.Store;
   
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -56,10 +64,35 @@ export interface IStorage {
   }>;
 }
 
+const PostgresSessionStore = connectPg(session);
+
 export class DatabaseStorage implements IStorage {
-  // User operations (mandatory for Replit Auth)
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true,
+      tableName: 'sessions'
+    });
+  }
+
+  // User operations for local authentication
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 

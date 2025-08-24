@@ -1,29 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertExpenseSchema, insertCategorySchema, insertBudgetSchema } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./auth";
+import { insertExpenseSchema, insertCategorySchema, insertBudgetSchema, insertUserSchema } from "@shared/schema";
 import { categorizeExpense, generateInsights } from "./openai";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
   // Initialize default categories
   await initializeDefaultCategories();
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Auth routes are handled by setupAuth in auth.ts
 
   // Category routes
   app.get('/api/categories', isAuthenticated, async (req, res) => {
@@ -39,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Expense routes
   app.get('/api/expenses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const expenses = await storage.getExpensesByUser(userId, limit);
       res.json(expenses);
@@ -51,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/expenses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedData = insertExpenseSchema.parse(req.body);
       
       // AI categorization if no category provided
@@ -113,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analytics routes
   app.get('/api/analytics/stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { startDate, endDate } = req.query;
       
       if (!startDate || !endDate) {
@@ -131,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Insights routes
   app.get('/api/insights', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const insights = await storage.getInsightsByUser(userId);
       res.json(insights);
     } catch (error) {
@@ -142,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/insights/generate', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Get current month expenses
       const now = new Date();
@@ -211,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Budget routes
   app.get('/api/budgets', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const budgets = await storage.getBudgetsByUser(userId);
       res.json(budgets);
     } catch (error) {
@@ -222,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/budgets', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedData = insertBudgetSchema.parse(req.body);
       
       const budget = await storage.createBudget({
