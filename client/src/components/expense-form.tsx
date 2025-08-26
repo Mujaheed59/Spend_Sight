@@ -45,12 +45,21 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/analytics/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/insights'] });
       toast({
         title: "Expense Added",
-        description: "Your expense has been successfully recorded.",
+        description: "Your expense has been successfully recorded. AI will analyze your spending patterns.",
       });
       form.reset();
       onClose();
+      
+      // Auto-generate insights after adding expense (with slight delay to allow DB update)
+      setTimeout(() => {
+        fetch('/api/insights/generate', { 
+          method: 'POST',
+          credentials: 'include'
+        }).catch(err => console.log('Auto-insight generation failed:', err));
+      }, 1000);
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {

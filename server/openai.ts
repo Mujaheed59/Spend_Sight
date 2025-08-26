@@ -98,15 +98,25 @@ export async function generateInsights(
       messages: [
         {
           role: "system",
-          content: `You are a financial advisor AI. Analyze spending patterns and provide insights. 
+          content: `You are a personal financial advisor AI. Analyze spending patterns and provide actionable insights.
+          
           Generate 2-4 insights based on the data. Each insight should have:
-          - type: "alert" (overspending), "goal" (savings achievement), "warning" (budget limits), or "recommendation" (suggestions)
-          - title: Short descriptive title
-          - description: Detailed actionable advice
+          - type: "alert" (urgent overspending), "goal" (positive achievements), "warning" (approaching limits), or "recommendation" (improvement suggestions)
+          - title: Compelling, specific title (max 40 chars)
+          - description: Actionable advice with specific amounts or percentages when possible
           - priority: "low", "medium", or "high"
           
-          Focus on meaningful patterns, budget comparisons, and actionable recommendations.
-          Respond with JSON array: [{"type": "alert", "title": "...", "description": "...", "priority": "high"}]`
+          Focus on:
+          - Budget violations or achievements
+          - Spending trends (increases/decreases)
+          - Category-specific patterns
+          - Practical saving opportunities
+          - Realistic, achievable recommendations
+          
+          Be encouraging for positive behaviors and constructive for areas of improvement.
+          Use ₹ currency symbol and include specific numbers when relevant.
+          
+          Respond with JSON: {"insights": [{"type": "alert", "title": "...", "description": "...", "priority": "high"}]}`
         },
         {
           role: "user",

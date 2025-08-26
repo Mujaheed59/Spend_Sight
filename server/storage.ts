@@ -43,6 +43,7 @@ export interface IStorage {
   getInsightsByUser(userId: string): Promise<Insight[]>;
   createInsight(insight: InsertInsight & { userId: string }): Promise<Insight>;
   markInsightAsRead(id: string): Promise<void>;
+  clearUserInsights(userId: string): Promise<void>;
   
   // Budget operations
   getBudgetsByUser(userId: string): Promise<Budget[]>;
@@ -237,6 +238,14 @@ export class MemStorage implements IStorage {
     if (insight) {
       insight.isRead = "true";
       this.insights.set(id, insight);
+    }
+  }
+
+  async clearUserInsights(userId: string): Promise<void> {
+    for (const [id, insight] of this.insights.entries()) {
+      if (insight.userId === userId) {
+        this.insights.delete(id);
+      }
     }
   }
 
@@ -516,6 +525,10 @@ export class MongoStorage implements IStorage {
 
   async markInsightAsRead(id: string): Promise<void> {
     await InsightModel.findByIdAndUpdate(id, { isRead: "true" });
+  }
+
+  async clearUserInsights(userId: string): Promise<void> {
+    await InsightModel.deleteMany({ userId });
   }
 
   // Budget operations

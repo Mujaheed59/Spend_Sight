@@ -134,6 +134,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       
+      // Clear old insights before generating new ones
+      await storage.clearUserInsights(userId);
+      
       // Get current month expenses
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -146,6 +149,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentExpenses = await storage.getExpensesByUserAndDateRange(userId, startOfMonth, endOfMonth);
       const previousExpenses = await storage.getExpensesByUserAndDateRange(userId, startOfPrevMonth, endOfPrevMonth);
       const budgets = await storage.getBudgetsByUser(userId);
+      
+      // Only generate insights if user has expenses
+      if (currentExpenses.length === 0 && previousExpenses.length === 0) {
+        const defaultInsight = await storage.createInsight({
+          type: 'recommendation',
+          title: 'Start Tracking Expenses',
+          description: 'Begin by adding your daily expenses to get personalized AI insights and spending recommendations.',
+          priority: 'medium',
+          userId,
+          isRead: "false"
+        });
+        return res.json([defaultInsight]);
+      }
       
       // Format data for AI
       const formattedCurrent = currentExpenses.map(exp => ({
