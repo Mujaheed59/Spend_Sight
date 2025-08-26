@@ -114,9 +114,37 @@ export function ExpenseForm({ open, onClose }: ExpenseFormProps) {
       return;
     }
 
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Amount Required",
+        description: "Please enter a valid amount for better AI categorization.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAICategorizing(true);
-    categorizeMutation.mutate({ description, amount: amount || 0 });
+    categorizeMutation.mutate({ description, amount });
   };
+
+  // Auto-trigger AI categorization when both description and amount are present
+  const watchDescription = form.watch('description');
+  const watchAmount = form.watch('amount');
+  
+  React.useEffect(() => {
+    const description = watchDescription?.trim();
+    const amount = parseFloat(watchAmount || '0');
+    
+    // Auto-categorize if we have good description and amount, but no category selected yet
+    if (description && description.length > 3 && amount > 0 && !form.getValues('categoryId') && !isAICategorizing) {
+      const timeoutId = setTimeout(() => {
+        setIsAICategorizing(true);
+        categorizeMutation.mutate({ description, amount });
+      }, 1500); // Delay to avoid too many API calls while typing
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [watchDescription, watchAmount, isAICategorizing, form, categorizeMutation]);
 
   const onSubmit = (data: InsertExpense) => {
     createExpenseMutation.mutate(data);

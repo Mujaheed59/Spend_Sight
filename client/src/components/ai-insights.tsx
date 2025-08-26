@@ -21,18 +21,29 @@ const getInsightIcon = (type: string) => {
   }
 };
 
-const getInsightColor = (type: string) => {
+const getInsightColor = (type: string, priority: string) => {
+  if (priority === 'high') {
+    switch (type) {
+      case 'alert':
+        return 'bg-red-50 border-red-300 text-red-900';
+      case 'warning':
+        return 'bg-orange-50 border-orange-300 text-orange-900';
+      default:
+        return 'bg-red-50 border-red-300 text-red-900';
+    }
+  }
+  
   switch (type) {
     case 'alert':
-      return 'bg-blue-50 border-blue-200 text-blue-900';
+      return 'bg-red-50 border-red-200 text-red-800';
     case 'goal':
-      return 'bg-green-50 border-green-200 text-green-900';
+      return 'bg-green-50 border-green-200 text-green-800';
     case 'warning':
-      return 'bg-amber-50 border-amber-200 text-amber-900';
+      return 'bg-amber-50 border-amber-200 text-amber-800';
     case 'recommendation':
-      return 'bg-purple-50 border-purple-200 text-purple-900';
+      return 'bg-blue-50 border-blue-200 text-blue-800';
     default:
-      return 'bg-blue-50 border-blue-200 text-blue-900';
+      return 'bg-gray-50 border-gray-200 text-gray-800';
   }
 };
 
@@ -145,10 +156,17 @@ export function AIInsights() {
       <CardContent>
         {(insights as any) && (insights as any).length > 0 ? (
           <div className="space-y-4" data-testid="insights-list">
-            {(insights as any).map((insight: any) => (
+            {(insights as any)
+              .sort((a: any, b: any) => {
+                // Sort by priority: high -> medium -> low
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
+                       (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+              })
+              .map((insight: any) => (
               <div 
                 key={insight.id} 
-                className={`p-4 rounded-lg border ${getInsightColor(insight.type)}`}
+                className={`p-4 rounded-lg border ${getInsightColor(insight.type, insight.priority)} transition-all hover:shadow-md`}
                 data-testid={`insight-${insight.id}`}
               >
                 <div className="flex items-start space-x-3">
@@ -159,8 +177,8 @@ export function AIInsights() {
                     <h4 className="text-sm font-medium mb-1" data-testid={`insight-title-${insight.id}`}>
                       {insight.title}
                     </h4>
-                    <p className="text-sm opacity-80" data-testid={`insight-message-${insight.id}`}>
-                      {insight.message}
+                    <p className="text-sm opacity-90 leading-relaxed" data-testid={`insight-message-${insight.id}`}>
+                      {insight.description || insight.message}
                     </p>
                     <div className="flex items-center justify-between mt-3">
                       <span className="text-xs text-gray-600">

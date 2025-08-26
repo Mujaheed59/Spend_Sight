@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import { insertExpenseSchema, insertCategorySchema, insertBudgetSchema, insertUserSchema } from "@shared/schema";
-import { categorizeExpense, generateInsights } from "./openai";
+import { categorizeExpense, generateInsights, generateBudgetRecommendations } from "./openai";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -115,6 +115,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // AI Budget Recommendations routes
+  app.get('/api/ai/budget-recommendations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const expenses = await storage.getExpensesByUser(userId);
+      
+      if (expenses.length === 0) {
+        return res.json([]);
+      }
+
+      // Format expenses with category names for AI
+      const expensesWithCategories = expenses.map(expense => ({
+        amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
+        categoryName: expense.category?.name || 'Other',
+        date: expense.date,
+        description: expense.description
+      }));
+
+      const recommendations = await generateBudgetRecommendations(expensesWithCategories);
+      
+      // Format recommendations for frontend
+      const formattedRecommendations = Object.entries(recommendations).map(([category, amount]) => {
+        const categorySpend = expensesWithCategories
+          .filter(e => e.categoryName === category)
+          .reduce((sum, e) => sum + e.amount, 0);
+        
+        return {
+          category,
+          currentSpend: categorySpend,
+          recommendedBudget: amount,
+          potentialSavings: Math.max(0, categorySpend - amount),
+          reason: `AI analysis suggests ₹${amount}/month for ${category} based on your spending patterns and financial goals.`
+        };
+      });
+
+      res.json(formattedRecommendations);
+    } catch (error) {
+      console.error('Error getting budget recommendations:', error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post('/api/ai/budget-recommendations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const expenses = await storage.getExpensesByUser(userId);
+      
+      if (expenses.length === 0) {
+        return res.json([]);
+      }
+
+      // Format expenses with category names for AI
+      const expensesWithCategories = expenses.map(expense => ({
+        amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
+        categoryName: expense.category?.name || 'Other',
+        date: expense.date,
+        description: expense.description
+      }));
+
+      const recommendations = await generateBudgetRecommendations(expensesWithCategories);
+      
+      // Format recommendations for frontend
+      const formattedRecommendations = Object.entries(recommendations).map(([category, amount]) => {
+        const categorySpend = expensesWithCategories
+          .filter(e => e.categoryName === category)
+          .reduce((sum, e) => sum + e.amount, 0);
+        
+        return {
+          category,
+          currentSpend: categorySpend,
+          recommendedBudget: amount,
+          potentialSavings: Math.max(0, categorySpend - amount),
+          reason: `AI analysis suggests ₹${amount}/month for ${category} based on your spending patterns and financial goals.`
+        };
+      });
+
+      res.json(formattedRecommendations);
+    } catch (error) {
+      console.error('Error generating budget recommendations:', error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

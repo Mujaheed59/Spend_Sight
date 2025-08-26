@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { StatsCards } from "@/components/stats-cards";
 import { ExpenseChart } from "@/components/expense-chart";
 import { AIInsights } from "@/components/ai-insights";
+import { BudgetRecommendations } from "@/components/budget-recommendations";
 import { RecentExpenses } from "@/components/recent-expenses";
 import { ExpenseForm } from "@/components/expense-form";
 import { BudgetSettings } from "@/components/budget-settings";
@@ -159,9 +160,10 @@ export default function Dashboard() {
                 <ExpenseChart />
               </div>
 
-              {/* AI Insights Section */}
-              <div className="mt-8">
+              {/* AI Insights and Budget Recommendations Section */}
+              <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <AIInsights />
+                <BudgetRecommendations />
               </div>
 
               {/* Recent Expenses Section */}
