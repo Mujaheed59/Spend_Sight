@@ -655,33 +655,56 @@ export class MongoStorage implements IStorage {
 // Initialize storage based on database availability
 let storage: IStorage;
 
-// Initialize storage immediately with memory storage
-storage = new MemStorage();
-console.log('🚀 Using enhanced in-memory storage with real-time features');
-
-// Try to upgrade to MongoDB when available
-const tryMongoUpgrade = () => {
-  try {
-    if (mongoose.connection.readyState === 1) {
-      storage = new MongoStorage();
-      console.log('✅ Upgraded to MongoDB storage');
+// Initialize storage - prefer MongoDB but fallback to memory
+const initializeStorage = () => {
+  // Start with memory storage as safe default
+  storage = new MemStorage();
+  console.log('🚀 Starting with enhanced in-memory storage');
+  
+  // Try to upgrade to MongoDB when ready
+  const attemptMongoUpgrade = () => {
+    try {
+      if (mongoose.connection.readyState === 1) {
+        storage = new MongoStorage();
+        console.log('✅ Upgraded to MongoDB storage with persistent data');
+        return true;
+      }
+    } catch (error) {
+      console.log('⚠️  MongoDB upgrade failed, staying with memory storage');
     }
-  } catch (error) {
-    console.log('❌ MongoDB upgrade failed, staying with memory storage');
-  }
+    return false;
+  };
+  
+  // Try immediate upgrade
+  setTimeout(attemptMongoUpgrade, 100);
+  
+  // Setup retry mechanism
+  const retryInterval = setInterval(() => {
+    if (attemptMongoUpgrade()) {
+      clearInterval(retryInterval);
+    }
+  }, 2000);
+  
+  // Stop retrying after 30 seconds
+  setTimeout(() => clearInterval(retryInterval), 30000);
 };
+
+// Initialize storage immediately
+initializeStorage();
 
 // Listen for database connection events
 mongoose.connection.on('connected', () => {
-  tryMongoUpgrade();
+  if (!(storage instanceof MongoStorage)) {
+    storage = new MongoStorage();
+    console.log('✅ Upgraded to MongoDB storage');
+  }
 });
 
 mongoose.connection.on('disconnected', () => {
   console.log('⚠️  MongoDB disconnected, using memory storage');
-  storage = new MemStorage();
+  if (!(storage instanceof MemStorage)) {
+    storage = new MemStorage();
+  }
 });
-
-// Try upgrade after a short delay
-setTimeout(tryMongoUpgrade, 2000);
 
 export { storage };
